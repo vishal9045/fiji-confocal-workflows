@@ -136,9 +136,10 @@ if (nCh < 2) exit("The images need at least two channels (the two organelles).")
 // defaults: named like the marker or shown in the usual colour (A green, B red, reporter magenta, nuclei blue as set
 // in the file), otherwise the usual order (C1 nuclei, C2 A, C3 B, C4 reporter)
 kA = channelLike(chNames, "tom ?20|tom ?70|mito|\\(green", minOf(1, nCh - 1));
-kB = channelLike(chNames, "sec61|calnex|er|\\(red", minOf(2, nCh - 1));
+kB = channelLike(chNames, "sec61|calnex|calret|kdel|er-?tracker|(^|[^a-z])er([^a-z]|$)|\\(red", minOf(2, nCh - 1));
 kR = channelLike(chNames, "strept|splics|pla|contact|\\(magenta", minOf(3, nCh - 1));
 kN = channelLike(chNames, "dapi|hoechst|405|nuc|\\(blue", 0);
+if (kB == kA) { for (i = nCh - 1; i >= 0; i--) if (i != kA && i != kN) kB = i; }   // A and B must differ
 NONE_R = "None (two markers only: apposition)"; NONE_NUC = "None (touching cells are not split)"; WHOLE = "Whole field (one cell per image)";
 chA = chNames[kA]; chB = chNames[kB];
 chR = NONE_R; if (nCh >= 4 && kR != kA && kR != kB && kR != kN) chR = chNames[kR];
@@ -208,7 +209,7 @@ for (fi = 0; fi < fPath.length; fi++) {
     use = usableSeries(fPath[fi]);
     for (u = 0; u < use.length; u++) {
         s = use[u];
-        if (s < 0) { if (s == -1) skipped = skipped + File.getName(fPath[fi]) + " is damaged (could not be read)\n"; continue; }
+        if (s < 0) { skipped = skipped + seriesProblem(fPath[fi], s, u); continue; }
         chs = newArray(2); chs[0] = cA; chs[1] = cB; names = newArray("chA", "chB");
         if (hasR) { chs = Array.concat(chs, cR); names = Array.concat(names, "chR"); }
         err = loadChannels(fPath[fi], s, chs, names);
@@ -285,12 +286,13 @@ rNames = newArray("Apposition (share of " + nameA + " within the distance of " +
 nK = keys.length;
 iCond = newArray(); iRep = newArray(); iFile = newArray(); iSer = newArray(); iPath = newArray(); iPx = newArray(); iNz = newArray(); iDz = newArray();
 cImg = newArray(); cLabel = newArray(); cEdge = newArray(); cArea = newArray(); cVal = newArray();   // cVal[k * nK + q]
+nOverlapOnly = 0;   // images where the distance rounds to 0 pixels
 noBgList = "";
 for (fi = 0; fi < fPath.length; fi++) {
     use = usableSeries(fPath[fi]);
     for (u = 0; u < use.length; u++) {
         s = use[u];
-        if (s < 0) { if (s == -1 && fCond[fi] != 0) skipped = skipped + File.getName(fPath[fi]) + " is damaged (could not be read)\n"; continue; }
+        if (s < 0) { if (fCond[fi] != 0) skipped = skipped + seriesProblem(fPath[fi], s, u); continue; }
         chs = newArray(2); chs[0] = cA; chs[1] = cB; names = newArray("chA", "chB");
         if (hasR) { chs = Array.concat(chs, cR); names = Array.concat(names, "chR"); }
         if (cN > 0) { chs = Array.concat(chs, cN); names = Array.concat(names, "nucch"); }
@@ -323,6 +325,7 @@ for (fi = 0; fi < fPath.length; fi++) {
         }
         // masks (0/255, every slice): A, B, both grown by the contact distance (in the plane of each slice)
         rPix = maxOf(0, round(dist / pw));   // 0 = overlap only
+        if (dist > 0 && rPix == 0) nOverlapOnly++;
         selectWindow("chA"); run("Duplicate...", "title=araw duplicate"); projectTo("araw", "qAmax");
         selectWindow("chB"); run("Duplicate...", "title=qB duplicate"); projectTo("qB", "qBmax"); close("qB");
         b = prepare("chA", radA); selectWindow("chA"); setThreshold(thrA, 1e30); run("Convert to Mask", "background=Dark black"); rename("mA");
@@ -614,6 +617,7 @@ done = done + "\nQC images:  " + qcDir + "\n \nStatistics use " + unitName + ", 
 if (flat) done = done + "\n \n2D max projection: overlaps are inflated (structures at different depths overlap in the projection), more in thick cells or where organelles cluster. Do not compare these numbers with 3D results.";
 else if (zNote != "") done = done + "\n \n" + zNote;
 if (noBgList != "") done = done + "\n \nLittle cell-free background (under 2% of the field), so background and noise are less certain in:\n" + noBgList;
+if (nOverlapOnly > 0) done = done + "\n \nThe distance of " + dist + " um is under half a pixel in " + nOverlapOnly + " image(s), so there apposition means overlap only. A distance of at least half the pixel size counts as one pixel.";
 if (skipped != "") done = done + "\n \nNot processed:\n" + skipped + "A file listed here that should match the others is most likely damaged.";
 if (viewNote != "") done = done + "\n \n" + viewNote;
 if (graphs.length > 0 && interactive) open(outDir + "bar_graphs.png");
@@ -786,10 +790,21 @@ function usableSeries(path) {
     for (k = 0; k < sx.length; k++) maxX = maxOf(maxX, sx[k]);
     out = newArray();
     for (k = 0; k < sx.length; k++) {
-        if (sx[k] < maxX / 2 || st[k] > 1 || sok[k] == 0) out = Array.concat(out, -2);
+        if (sx[k] < maxX / 2) out = Array.concat(out, -2);          // thumbnail / overview: skipped silently
+        else if (st[k] > 1) out = Array.concat(out, -3);           // time-lapse
+        else if (sok[k] == 0) out = Array.concat(out, -4);         // a plane could not be read
         else out = Array.concat(out, k);
     }
     return out;
+}
+
+// "Not processed" line for a series code from usableSeries (k = its position in the list); "" for thumbnails.
+function seriesProblem(path, s, k) {
+    n = File.getName(path);
+    if (s == -1) return n + " is damaged (could not be read)\n";
+    if (s == -3) return n + " series " + (k + 1) + " is a time-lapse (not supported): skipped\n";
+    if (s == -4) return n + " series " + (k + 1) + " has a plane that could not be read: skipped\n";
+    return "";
 }
 
 function uniqueOf(a) {
@@ -1236,4 +1251,4 @@ function cellLevels(sumTitle, nCells, nz, noise) {
 }
 
 // Plugin version: shown by About and written into every results file.
-function pluginVersion() { return "1.0.0"; }
+function pluginVersion() { return "1.0.1"; }

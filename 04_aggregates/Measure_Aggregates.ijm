@@ -214,7 +214,7 @@ for (fi = 0; fi < fPath.length; fi++) {
     use = usableSeries(fPath[fi]);
     for (u = 0; u < use.length; u++) {
         s = use[u];
-        if (s < 0) { if (s == -1) skipped = skipped + File.getName(fPath[fi]) + " is damaged (could not be read)\n"; continue; }
+        if (s < 0) { skipped = skipped + seriesProblem(fPath[fi], s, u); continue; }
         chs = newArray(1); chs[0] = cP; names = newArray("prot");
         if (hasOrg) { chs = Array.concat(chs, cO); names = Array.concat(names, "org"); }
         err = loadChannels(fPath[fi], s, chs, names);
@@ -412,7 +412,7 @@ for (fi = 0; fi < fPath.length; fi++) {
     use = usableSeries(fPath[fi]);
     for (u = 0; u < use.length; u++) {
         s = use[u];
-        if (s < 0) { if (s == -1 && fCond[fi] != 0) skipped = skipped + File.getName(fPath[fi]) + " is damaged (could not be read)\n"; continue; }
+        if (s < 0) { if (fCond[fi] != 0) skipped = skipped + seriesProblem(fPath[fi], s, u); continue; }
         chs = newArray(1); chs[0] = cP; names = newArray("prot");
         if (hasOrg) { chs = Array.concat(chs, cO); names = Array.concat(names, "org"); }
         if (cN > 0) { chs = Array.concat(chs, cN); names = Array.concat(names, "nucch"); }
@@ -470,7 +470,7 @@ for (fi = 0; fi < fPath.length; fi++) {
         oX = newArray(); oY = newArray(); oV = newArray(); oM = newArray(); rat3 = newArray();
         if (do3D && nz > 1) {
             // the 3D Objects Counter only measures intensities on 8- or 16-bit stacks
-            selectWindow("praw"); run("Duplicate...", "title=praw16 duplicate"); setOption("ScaleConversions", false); run("16-bit");
+            selectWindow("praw"); run("Duplicate...", "title=praw16 duplicate"); scl = call("ij.process.ImageConverter.getDoScaling"); setOption("ScaleConversions", false); run("16-bit"); setOption("ScaleConversions", scl == "true");
             selectWindow("prot"); run("Duplicate...", "title=p3 duplicate");
             b3 = prepare("p3", bgRadius);
             selectWindow("p3"); setThreshold(T3, 1e30); run("Convert to Mask", "background=Dark black");
@@ -863,7 +863,7 @@ function organelleCoverage(sumTitle, org2d, nCells, outLab) {
     imageCalculator("Subtract create 32-bit", "cov_s", "cov_t"); rename("cov_d");
     setThreshold(1e-6, 1e30); run("Convert to Mask"); run("32-bit"); run("Divide...", "value=255"); rename("cov_p");
     selectWindow("cellLabels"); run("Select None"); run("Duplicate...", "title=cov_l"); run("32-bit");
-    imageCalculator("Multiply create 32-bit", "cov_p", "cov_l"); rename(outLab); setOption("ScaleConversions", false); run("16-bit");
+    imageCalculator("Multiply create 32-bit", "cov_p", "cov_l"); rename(outLab); scl = call("ij.process.ImageConverter.getDoScaling"); setOption("ScaleConversions", false); run("16-bit"); setOption("ScaleConversions", scl == "true");
     imageCalculator("Multiply create 32-bit", "cov_p", org2d); rename("cov_po");
     cov = newArray(nCells);
     for (ci = 0; ci < nCells; ci++) { o = roiVal(org2d, ci); cov[ci] = NaN; if (o > 0) cov[ci] = roiVal("cov_po", ci) / o; }
@@ -1050,10 +1050,21 @@ function usableSeries(path) {
     for (k = 0; k < sx.length; k++) maxX = maxOf(maxX, sx[k]);
     out = newArray();
     for (k = 0; k < sx.length; k++) {
-        if (sx[k] < maxX / 2 || st[k] > 1 || sok[k] == 0) out = Array.concat(out, -2);
+        if (sx[k] < maxX / 2) out = Array.concat(out, -2);          // thumbnail / overview: skipped silently
+        else if (st[k] > 1) out = Array.concat(out, -3);           // time-lapse
+        else if (sok[k] == 0) out = Array.concat(out, -4);         // a plane could not be read
         else out = Array.concat(out, k);
     }
     return out;
+}
+
+// "Not processed" line for a series code from usableSeries (k = its position in the list); "" for thumbnails.
+function seriesProblem(path, s, k) {
+    n = File.getName(path);
+    if (s == -1) return n + " is damaged (could not be read)\n";
+    if (s == -3) return n + " series " + (k + 1) + " is a time-lapse (not supported): skipped\n";
+    if (s == -4) return n + " series " + (k + 1) + " has a plane that could not be read: skipped\n";
+    return "";
 }
 
 function uniqueOf(a) {
@@ -1508,4 +1519,4 @@ function cellLevels(sumTitle, nCells, nz, noise) {
 }
 
 // Plugin version: shown by About and written into every results file.
-function pluginVersion() { return "1.0.0"; }
+function pluginVersion() { return "1.0.1"; }

@@ -836,4 +836,4 @@ function projectTo(title, newTitle) {
 }
 
 // Plugin version: shown by About and written into every results file.
-function pluginVersion() { return "1.0.0"; }
+function pluginVersion() { return "1.0.1"; }

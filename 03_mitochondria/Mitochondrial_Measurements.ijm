@@ -121,7 +121,12 @@ for (i = 0; i < lines.length; i++) {
     if (f[0] == "S") { if (parseInt(f[4]) > 1) anyZ = true; }
     if (f[0] == "C") { if (parseInt(f[1]) == 0) chNames = Array.concat(chNames, "C" + (parseInt(f[2]) + 1) + " " + f[3]); }
 }
-measureCh = chNames[0];
+// default: a channel named like a mitochondrial marker, else one shown in red, else the first that does not look
+// nuclear (the user confirms it in the dialog; no channel order is assumed)
+k = channelLike(chNames, "tom ?20|tom ?70|tom ?22|tim ?23|mitotracker|mito|tmrm|tmre|hsp60|cox ?4|pdh", -1);
+if (k < 0) k = channelLike(chNames, "\\(red", -1);
+if (k < 0) { k = 0; for (i = chNames.length - 1; i >= 0; i--) if (!matches(toLowerCase(chNames[i]), ".*(dapi|hoechst|draq|405|\\(blue).*")) k = i; }
+measureCh = chNames[k];
 analyses = newArray("2D (max projection)", "2D + 3D (full stack)");
 analysis = analyses[0];
 bgRadius = 1;          // um, rolling-ball radius
@@ -167,7 +172,7 @@ for (fi = 0; fi < fPath.length; fi++) {
     use = usableSeries(fPath[fi]);
     for (u = 0; u < use.length; u++) {
         s = use[u];
-        if (s < 0) { if (s == -1) skipped = skipped + File.getName(fPath[fi]) + " is damaged (could not be read)\n"; continue; }
+        if (s < 0) { skipped = skipped + seriesProblem(fPath[fi], s, u); continue; }
         one = newArray(1); one[0] = ch; err = loadChannels(fPath[fi], s, one, newArray("raw"));
         if (err != "") { skipped = skipped + File.getName(fPath[fi]) + ": " + err + "\n"; continue; }
         projectTo("raw", "p2");
@@ -256,7 +261,7 @@ for (fi = 0; fi < fPath.length; fi++) {
     use = usableSeries(fPath[fi]);
     for (u = 0; u < use.length; u++) {
         s = use[u];
-        if (s < 0) { if (s == -1 && fCond[fi] != 0) skipped = skipped + File.getName(fPath[fi]) + " is damaged (could not be read)\n"; continue; }
+        if (s < 0) { if (fCond[fi] != 0) skipped = skipped + seriesProblem(fPath[fi], s, u); continue; }
         one = newArray(1); one[0] = ch; err = loadChannels(fPath[fi], s, one, newArray("raw"));
         if (err != "") { if (fCond[fi] != 0) skipped = skipped + File.getName(fPath[fi]) + ": " + err + "\n"; continue; }
         name = File.getName(fPath[fi]);
@@ -673,10 +678,21 @@ function usableSeries(path) {
     for (k = 0; k < sx.length; k++) maxX = maxOf(maxX, sx[k]);
     out = newArray();
     for (k = 0; k < sx.length; k++) {
-        if (sx[k] < maxX / 2 || st[k] > 1 || sok[k] == 0) out = Array.concat(out, -2);
+        if (sx[k] < maxX / 2) out = Array.concat(out, -2);          // thumbnail / overview: skipped silently
+        else if (st[k] > 1) out = Array.concat(out, -3);           // time-lapse
+        else if (sok[k] == 0) out = Array.concat(out, -4);         // a plane could not be read
         else out = Array.concat(out, k);
     }
     return out;
+}
+
+// "Not processed" line for a series code from usableSeries (k = its position in the list); "" for thumbnails.
+function seriesProblem(path, s, k) {
+    n = File.getName(path);
+    if (s == -1) return n + " is damaged (could not be read)\n";
+    if (s == -3) return n + " series " + (k + 1) + " is a time-lapse (not supported): skipped\n";
+    if (s == -4) return n + " series " + (k + 1) + " has a plane that could not be read: skipped\n";
+    return "";
 }
 
 function uniqueOf(a) {
@@ -884,6 +900,12 @@ function writeXlsx(path, names, contents) {
     return err;
 }
 
+// Index (0-based) of the first channel whose name matches the regular expression (case-insensitive), else dflt.
+function channelLike(names, re, dflt) {
+    for (i = 0; i < names.length; i++) if (matches(toLowerCase(names[i]), ".*(" + re + ").*")) return i;
+    return dflt;
+}
+
 // Opens series s and keeps the given channels (1-based) as 32-bit images or stacks with the given titles
 // (calibration kept). Returns "" or the problem.
 function loadChannels(path, s, chs, titles) {
@@ -986,4 +1008,4 @@ function noiseRms(title) {
 }
 
 // Plugin version: shown by About and written into every results file.
-function pluginVersion() { return "1.0.0"; }
+function pluginVersion() { return "1.0.1"; }

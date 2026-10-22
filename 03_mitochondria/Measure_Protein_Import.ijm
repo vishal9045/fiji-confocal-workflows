@@ -239,7 +239,7 @@ if (!nuclear) {
         use = usableSeries(fPath[fi]);
         for (u = 0; u < use.length; u++) {
             s = use[u];
-            if (s < 0) { if (s == -1) skipped = skipped + File.getName(fPath[fi]) + " is damaged (could not be read)\n"; continue; }
+            if (s < 0) { skipped = skipped + seriesProblem(fPath[fi], s, u); continue; }
             one = newArray(1); one[0] = cM;
             err = loadChannels(fPath[fi], s, one, newArray("tom"));
             if (err != "") { skipped = skipped + File.getName(fPath[fi]) + ": " + err + "\n"; continue; }
@@ -311,7 +311,7 @@ for (fi = 0; fi < fPath.length; fi++) {
     use = usableSeries(fPath[fi]);
     for (u = 0; u < use.length; u++) {
         s = use[u];
-        if (s < 0) { if (s == -1 && fCond[fi] != 0) skipped = skipped + File.getName(fPath[fi]) + " is damaged (could not be read)\n"; continue; }
+        if (s < 0) { if (fCond[fi] != 0) skipped = skipped + seriesProblem(fPath[fi], s, u); continue; }
         chs = newArray(cG, cM); names = newArray("gfp", "tom");
         if (cC > 0) { chs = Array.concat(chs, cC); names = Array.concat(names, "cellch"); }
         if (cN > 0) { chs = Array.concat(chs, cN); names = Array.concat(names, "nucch"); }
@@ -713,10 +713,21 @@ function usableSeries(path) {
     for (k = 0; k < sx.length; k++) maxX = maxOf(maxX, sx[k]);
     out = newArray();
     for (k = 0; k < sx.length; k++) {
-        if (sx[k] < maxX / 2 || st[k] > 1 || sok[k] == 0) out = Array.concat(out, -2);
+        if (sx[k] < maxX / 2) out = Array.concat(out, -2);          // thumbnail / overview: skipped silently
+        else if (st[k] > 1) out = Array.concat(out, -3);           // time-lapse
+        else if (sok[k] == 0) out = Array.concat(out, -4);         // a plane could not be read
         else out = Array.concat(out, k);
     }
     return out;
+}
+
+// "Not processed" line for a series code from usableSeries (k = its position in the list); "" for thumbnails.
+function seriesProblem(path, s, k) {
+    n = File.getName(path);
+    if (s == -1) return n + " is damaged (could not be read)\n";
+    if (s == -3) return n + " series " + (k + 1) + " is a time-lapse (not supported): skipped\n";
+    if (s == -4) return n + " series " + (k + 1) + " has a plane that could not be read: skipped\n";
+    return "";
 }
 
 function uniqueOf(a) {
@@ -1157,4 +1168,4 @@ function segmentCells(outlineSrc, useNuc, whole, minCell, minNuc, cellMethod, nu
 }
 
 // Plugin version: shown by About and written into every results file.
-function pluginVersion() { return "1.0.0"; }
+function pluginVersion() { return "1.0.1"; }

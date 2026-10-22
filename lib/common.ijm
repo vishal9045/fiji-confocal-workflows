@@ -104,10 +104,21 @@ function usableSeries(path) {
     for (k = 0; k < sx.length; k++) maxX = maxOf(maxX, sx[k]);
     out = newArray();
     for (k = 0; k < sx.length; k++) {
-        if (sx[k] < maxX / 2 || st[k] > 1 || sok[k] == 0) out = Array.concat(out, -2);
+        if (sx[k] < maxX / 2) out = Array.concat(out, -2);          // thumbnail / overview: skipped silently
+        else if (st[k] > 1) out = Array.concat(out, -3);           // time-lapse
+        else if (sok[k] == 0) out = Array.concat(out, -4);         // a plane could not be read
         else out = Array.concat(out, k);
     }
     return out;
+}
+
+// "Not processed" line for a series code from usableSeries (k = its position in the list); "" for thumbnails.
+function seriesProblem(path, s, k) {
+    n = File.getName(path);
+    if (s == -1) return n + " is damaged (could not be read)\n";
+    if (s == -3) return n + " series " + (k + 1) + " is a time-lapse (not supported): skipped\n";
+    if (s == -4) return n + " series " + (k + 1) + " has a plane that could not be read: skipped\n";
+    return "";
 }
 
 function uniqueOf(a) {
@@ -576,4 +587,4 @@ function cellLevels(sumTitle, nCells, nz, noise) {
 }
 
 // Plugin version: shown by About and written into every results file.
-function pluginVersion() { return "1.0.0"; }
+function pluginVersion() { return "1.0.1"; }
