@@ -7,7 +7,7 @@ The easiest way is the update site, which also brings you every fix automaticall
 
 Without the updater, download [`Confocal_Workflows.jar`](Confocal_Workflows.jar) (the download button is on that page), drag it onto the Fiji window (or copy it into `Fiji.app/plugins/`) and restart Fiji. To update, replace the jar. If you installed loose `.ijm` copies earlier, delete them, or each workflow will be listed twice.
 
-Plugins › Confocal Workflows › About Confocal Workflows shows the installed version, and every results workbook records it in its Settings sheet.
+Plugins › Confocal Workflows › About Confocal Workflows shows the installed version, and every results workbook records it in its Settings sheet. Step-by-step instructions, updating, uninstalling and common problems are in [INSTALL.md](INSTALL.md).
 
 ## Deconvolve Confocal Stack
 For 60x/100x confocal stacks. Give it one file or a whole folder and pick the series. The workflow reads the optics from the file, checks Nyquist sampling and runs a trial on each channel (a montage with contrast and noise) before Richardson-Lucy deconvolution; nuclear channels (DAPI, Hoechst) skip the trial and get a fixed 10 iterations. It saves calibrated TIFFs, QC images, a methods manifest (CSV) and, unless you turn them off, figures: per-channel panels and merges, with one display range per channel across all images. "Figures only" remakes the figures from an earlier run, and setting every channel to "raw" makes figures without deconvolving.
