@@ -784,7 +784,7 @@ if (exo) {
     aggCell = "\nAggregated cell\tat least " + d2s(cut, 1) + "% of its organelle carries no protein: the protein has left the organelle for a few rods, rings or masses (set in the aggregate window; start " + d2s(cutStart, 1) + "%, just above the highest transfected control cell). Its outlined protein is reported as the aggregate"
         + "\nExpression bins\ttertiles of the protein level of all measured cells; overexpressed protein can self-aggregate at high levels, so compare conditions within a bin";
 }
-settings = "Setting\tValue\nAnalysis\t" + mode + "; " + analysis + "\nProtein\t" + origin + "\n";
+settings = "Setting\tValue\nPlugin\tConfocal Workflows " + pluginVersion() + "\nAnalysis\t" + mode + "; " + analysis + "\nProtein\t" + origin + "\n";
 if (compare) for (g = 0; g < nCond; g++) settings = settings + condNames[g] + " folder\t" + dirs[g] + "\n";
 else settings = settings + "Input\t" + fPath[0] + "\n";
 settings = settings + "Protein channel\t" + protCh + "\nOrganelle\t" + orgCh + "\nNuclei\t" + nucCh + "\nCells outlined with\t" + outlineCh
@@ -1506,3 +1506,6 @@ function cellLevels(sumTitle, nCells, nz, noise) {
     }
     return lv;
 }
+
+// Plugin version: shown by About and written into every results file.
+function pluginVersion() { return "1.0.0"; }

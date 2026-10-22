@@ -432,7 +432,7 @@ for (c = 0; c < nCond; c++) {
         repRows = repRows + "\n";
     }
 }
-settings = "Setting\tValue\nAnalysis\t" + mode + "; " + analysis + "\n";
+settings = "Setting\tValue\nPlugin\tConfocal Workflows " + pluginVersion() + "\nAnalysis\t" + mode + "; " + analysis + "\n";
 if (compare) for (g = 0; g < nCond; g++) settings = settings + condNames[g] + " folder\t" + dirs[g] + "\n";
 else settings = settings + "Input\t" + fPath[0] + "\n";
 if (useRois) settings = settings + "Regions\toutlined by hand on each image (Region column)\n";
@@ -984,3 +984,6 @@ function noiseRms(title) {
     if (n == 0) return 0;
     return sqrt(sq / n);
 }
+
+// Plugin version: shown by About and written into every results file.
+function pluginVersion() { return "1.0.0"; }

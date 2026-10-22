@@ -2,7 +2,7 @@
 
 Each macro = its own code, then MARKER, then the lib functions it calls (directly or through other lib functions).
 Edit shared functions only in lib/common.ijm, then run:  python3 tools/build.py   (--check: only report stale files)
-It also packs the workflows into Confocal_Workflows.jar (menu: Plugins > Confocal Workflows) for one-file install.
+It also packs the workflows (and about/) into Confocal_Workflows.jar (menu: Plugins > Confocal Workflows) for one-file install.
 """
 import glob, io, os, re, sys, zipfile
 
@@ -46,6 +46,11 @@ def build(path, funcs):
     return own + '\n\n' + MARKER + '\n\n' + '\n'.join(funcs[n] for n in funcs if n in need)
 
 
+def macros():
+    """The workflows in menu order, About last."""
+    return sorted(glob.glob(os.path.join(ROOT, '0*', '*.ijm'))) + sorted(glob.glob(os.path.join(ROOT, 'about', '*.ijm')))
+
+
 def jar(paths):
     """Workflows + plugins.config as a jar; fixed timestamps so an unchanged build gives identical bytes."""
     names = [os.path.basename(p) for p in paths]
@@ -61,13 +66,13 @@ def jar(paths):
 if __name__ == '__main__':
     funcs = lib_functions()
     stale = []
-    for path in sorted(glob.glob(os.path.join(ROOT, '0*', '*.ijm'))):
+    for path in macros():
         new = build(path, funcs)
         if new != open(path).read():
             stale.append(os.path.relpath(path, ROOT))
             if '--check' not in sys.argv:
                 open(path, 'w').write(new)
-    paths = sorted(glob.glob(os.path.join(ROOT, '0*', '*.ijm')))
+    paths = macros()
     jar_path = os.path.join(ROOT, 'Confocal_Workflows.jar')
     data = jar(paths)
     if not os.path.exists(jar_path) or open(jar_path, 'rb').read() != data:

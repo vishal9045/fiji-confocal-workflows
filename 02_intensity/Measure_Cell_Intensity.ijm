@@ -349,7 +349,7 @@ for (c = 0; c < nCond; c++) {
             + "\t" + d2s(repMean(iPct, iCond, iRep, c, reps[r]), 4) + "\t" + d2s(repMean(iField, iCond, iRep, c, reps[r]), 4) + "\n";
     }
 }
-settings = "Setting\tValue\nAnalysis\t" + mode + "\n";
+settings = "Setting\tValue\nPlugin\tConfocal Workflows " + pluginVersion() + "\nAnalysis\t" + mode + "\n";
 if (compare) for (g = 0; g < nCond; g++) settings = settings + condNames[g] + " folder\t" + dirs[g] + "\n";
 else settings = settings + "Input\t" + fPath[0] + "\n";
 settings = settings + "Measured channel\t" + measureCh + "\nZ-projection\t" + projection
@@ -809,3 +809,6 @@ function loadChannels(path, s, chs, titles) {
     close(src);
     return "";
 }
+
+// Plugin version: shown by About and written into every results file.
+function pluginVersion() { return "1.0.0"; }

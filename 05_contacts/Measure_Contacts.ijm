@@ -509,7 +509,7 @@ for (c = 0; c < nCond; c++) {
 Array.getStatistics(iDz, dzMin, dzMax);
 zNote = ""; if (!flat && dzMax > 0.3) zNote = "Slice step up to " + d2s(dzMax, 2) + " um: contacts thinner than that are partly missed in z (in-plane contacts are counted; across slices only within a slice).";
 rPixTxt = "" + maxOf(0, round(dist / iPx[0])) + " pixel(s); 0 = the outlines overlap";
-settings = "Setting\tValue\nAnalysis\t" + mode + "\nMeasured on\t" + analysis + "\n";
+settings = "Setting\tValue\nPlugin\tConfocal Workflows " + pluginVersion() + "\nAnalysis\t" + mode + "\nMeasured on\t" + analysis + "\n";
 if (flat) settings = settings + "2D warning\tin a max projection, structures at different depths land on the same pixels, so overlaps are inflated, more in thick cells or where organelles cluster, and differences between conditions can shrink or grow. Use 2D only for single planes or max projections, or to match earlier max-projection results; do not mix 2D and 3D numbers\n";
 if (compare) for (g = 0; g < nCond; g++) settings = settings + condNames[g] + " folder\t" + dirs[g] + "\n";
 else settings = settings + "Input\t" + fPath[0] + "\n";
@@ -1234,3 +1234,6 @@ function cellLevels(sumTitle, nCells, nz, noise) {
     }
     return lv;
 }
+
+// Plugin version: shown by About and written into every results file.
+function pluginVersion() { return "1.0.0"; }

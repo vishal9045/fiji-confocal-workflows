@@ -556,7 +556,7 @@ for (c = 0; c < nCond; c++) {
         repRows = repRows + "\n";
     }
 }
-settings = "Setting\tValue\nImport into\t" + target + "\nReporter\t" + reporterType + "\nAnalysis\t" + mode + "\n";
+settings = "Setting\tValue\nPlugin\tConfocal Workflows " + pluginVersion() + "\nImport into\t" + target + "\nReporter\t" + reporterType + "\nAnalysis\t" + mode + "\n";
 if (compare) for (g = 0; g < nCond; g++) settings = settings + condNames[g] + " folder\t" + dirs[g] + "\n";
 else settings = settings + "Input\t" + fPath[0] + "\n";
 settings = settings + "Reporter channel\t" + gfpCh + "\nNuclei\t" + nucCh + "\nCell-fill marker\t" + cellCh;
@@ -1155,3 +1155,6 @@ function segmentCells(outlineSrc, useNuc, whole, minCell, minNuc, cellMethod, nu
     run("Clear Results");
     return n;
 }
+
+// Plugin version: shown by About and written into every results file.
+function pluginVersion() { return "1.0.0"; }

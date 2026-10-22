@@ -115,7 +115,7 @@ File.makeDirectory(decDir);
 File.makeDirectory(qcDir);
 File.makeDirectory(trialDir);
 manifest = outDir + "deconvolution_manifest.csv";
-manifestHead = "file,series,series_name,channel,channel_name,handling,ex_nm,ex_assumed,em_nm,NA,refractive_index,pixel_um,z_step_um,psf_fwhm_xy_um,psf_fwhm_z_um,algorithm,iterations,nyquist_xy,nyquist_z,output";
+manifestHead = "file,series,series_name,channel,channel_name,handling,ex_nm,ex_assumed,em_nm,NA,refractive_index,pixel_um,z_step_um,psf_fwhm_xy_um,psf_fwhm_z_um,algorithm,iterations,nyquist_xy,nyquist_z,plugin_version,output";
 newRows = "";                                            // this run's manifest rows (written at the end)
 usedBases = newArray();                                  // output names taken in this run
 nSaved = 0; skipped = "";
@@ -365,7 +365,7 @@ for (fi = 0; fi < files.length; fi++) {
             q1 = csv(File.getName(path)); q2 = csv(sName[s]); q3 = csv(chName[k]); q4 = csv(outName);
             newRows = newRows + q1 + "," + (s + 1) + "," + q2 + "," + (c + 1) + "," + q3 + "," + role[c] + ","
                 + lex + "," + exNote + "," + chEm[k] + "," + na + "," + ri + "," + d2s(sPx[s], 4) + "," + d2s(sPz[s], 4) + ","
-                + d2s(fl, 4) + "," + d2s(fa, 4) + "," + algo + "," + iters[c] + "," + nyXY + "," + nyZ + "," + q4 + "\n";
+                + d2s(fl, 4) + "," + d2s(fa, 4) + "," + algo + "," + iters[c] + "," + nyXY + "," + nyZ + ",Confocal Workflows " + pluginVersion() + "," + q4 + "\n";
             close("raw"); close("out");
             print("Saved " + outName);
             sumFile[nSaved] = File.getName(path); sumSeries[nSaved] = sName[s]; sumChannel[nSaved] = "C" + (c + 1) + " " + chName[k];
@@ -834,3 +834,6 @@ function projectTo(title, newTitle) {
     else run("Duplicate...", " ");
     rename(newTitle);
 }
+
+// Plugin version: shown by About and written into every results file.
+function pluginVersion() { return "1.0.0"; }

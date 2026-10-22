@@ -574,3 +574,6 @@ function cellLevels(sumTitle, nCells, nz, noise) {
     }
     return lv;
 }
+
+// Plugin version: shown by About and written into every results file.
+function pluginVersion() { return "1.0.0"; }
