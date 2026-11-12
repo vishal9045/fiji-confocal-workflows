@@ -8,10 +8,11 @@ Fiji then installs the workflows for you and brings in every fix when you update
 
 1. Start Fiji and open **Help › Update…**. Wait until it has checked for updates.
 2. Click **Manage update sites**.
-3. Click **Add Unlisted Site**. A new row appears at the bottom of the list.
-4. In that row, set the name to `Confocal-Workflows` and the URL to `https://sites.imagej.net/Confocal-Workflows/`, and tick its box.
-5. Click **Apply and Close**, then **Apply changes**.
-6. Restart Fiji.
+3. Find **Confocal-Workflows** in the list and tick its box.
+4. Click **Apply and Close**, then **Apply changes**.
+5. Restart Fiji.
+
+If your Fiji's list does not show it, click **Add Unlisted Site** and enter the name `Confocal-Workflows` and the URL `https://sites.imagej.net/Confocal-Workflows/`, then tick it.
 
 The workflows are now under **Plugins › Confocal Workflows**.
 
